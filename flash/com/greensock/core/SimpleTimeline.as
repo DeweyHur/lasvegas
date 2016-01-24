@@ -1,4 +1,4 @@
-﻿/**
+/**
  * VERSION: 12.0.4
  * DATE: 2014-07-08
  * AS3 (AS2 version is also available)

@@ -1,6 +1,6 @@
 /**
- * VERSION: 1.941
- * DATE: 2015-01-20
+ * VERSION: 1.938
+ * DATE: 2013-07-16
  * AS3
  * UPDATES AND DOCS AT: http://www.greensock.com/loadermax/
  **/
@@ -22,7 +22,6 @@ package com.greensock.loading {
 	import flash.net.URLVariables;
 	import flash.utils.Timer;
 	import flash.utils.getTimer;
-	import flash.utils.setTimeout;
 	
 	/** Dispatched when the loader's <code>httpStatus</code> value changes. **/
 	[Event(name="httpStatus", 	type="com.greensock.events.LoaderEvent")]
@@ -502,7 +501,6 @@ function errorHandler(event:LoaderEvent):void {
 				_ns.client = {};
 				_video = null;
 				_ns = null;
-				_nc.close();
 				_nc = null;
 				_sound = null;
 				(_sprite as Object).loader = null;
@@ -998,18 +996,11 @@ function cuePointHandler(event:LoaderEvent):void {
 				if (!_bufferFull) {
 					_onBufferFull();
 				}
-				if (_initted) {
-					_completeHandler(event);
-				} else {
-					setTimeout(function() {
-						if (!_initted) {
-							_forceInit();
-							_errorHandler(new LoaderEvent(LoaderEvent.ERROR, this, "No metaData was received."));
-						}
-						_completeHandler(event);
-					}, 100);
+				if (!_initted) {
+					_forceInit();
+					_errorHandler(new LoaderEvent(LoaderEvent.ERROR, this, "No metaData was received."));
 				}
-				
+				_completeHandler(event);
 			} else if (_dispatchProgress && (_cachedBytesLoaded / _cachedBytesTotal) != (bl / bt)) {
 				dispatchEvent(new LoaderEvent(LoaderEvent.PROGRESS, this));
 			}

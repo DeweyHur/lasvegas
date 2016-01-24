@@ -1,4 +1,4 @@
-﻿package com.greensock.events {
+package com.greensock.events {
 	import flash.events.Event;
 /**
  * Used for dispatching events from the GreenSock Animation Platform. 
