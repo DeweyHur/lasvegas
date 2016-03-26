@@ -1,4 +1,8 @@
-var server = require('./server.js')
-var lobby = require ('./lobby.js')
+import {Server} from './server';
+import {shuffle} from './array';
+import {Lobby} from './lobby'
 
-server.on('lobby', lobby)
+var server = new Server();
+var lobby = new Lobby(server);
+server.defaultListeners.add(lobby);
+console.log('Server is ready...');

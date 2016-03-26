@@ -1,79 +1,44 @@
-var server = require('./server.js')
+import { shuffle } from './array'
+import { GameRoom } from './room'
 
-var lasvegas = module.exports = {};
+export class LasVegas extends GameRoom
+{
+  get TotalRound() { return 4; }
+  get TableCount() { return 6; }
+  get MaxPrize() { return 5; }
+  
+  constructor(server) {
+    super(server);
+  }
 
-var game
-var currentRound = 0
-const TOTAL_ROUND = 4
-const TABLE_COUNT = 6
-const MAX_PRIZE = 5
+  gameover() {
+    this.broadcast({ cmd: 'result' });
+  }
 
-function gameover() {
-  server.broadcast({ cmd: 'result' })
-}
-
-function roundInit() {
-  var round = game.rounds[game.rounds.length - 1]
-  round.tables = [];
-  for (var index = 0; index < TABLE_COUNT; ++index) {
-    var totalPrize = 0
-    var prizes = []
-    while (totalPrize < MAX_PRIZE) {
-      var prize = Math.floor(Math.random() * 9 + 1)
-      prizes.push(prize)
-      totalPrize += prize;
+  initRound() {
+    var round = { tables: [] };
+    this.game.rounds.push(round);
+    
+    for (var index = 0; index < this.TableCount; ++index) {
+      var table = { prizes: [] };
+      round.tables.push(table);
+      do {
+        table.prizes.push(this.game.prizes.pop());
+      } while (table.prizes.reduce((prev, cur) => prev + cur) < this.MaxPrize);
+      table.prizes.sort((lhs, rhs) => rhs - lhs);
     }
-    prizes.sort()
-    round.tables.push(prizes) 
+    return round;
   }
-  server.broadcast({ cmd: 'round', game: game })  
-} 
 
-webserver.on('data', function (data) {
-  console.log(data.message);
-  var member = members[data.socket.id]
-  var player = members[data.socket.id]
-  switch (data.message.cmd) {
-    case 'lobby':
-      if (member === undefined) {
-        member = members[data.socket.id] = {
-          nick: data.message.nick
-        }
-        webserver.send(data.socket, { cmd: 'lobby', nick: data.message.nick });
-        server.broadcast({ cmd: 'join', nick: data.message.nick, members: dictionary.keys(members) }) 
-      }
-      break;
-
-    case 'chat':
-      server.broadcast({ cmd: 'chat', nick: members[data.socket.id].nick, chat: data.message.chat })
-      break;
-
-    case 'gameReady':
-      player.ready = true
-      server.broadcast({ cmd: 'gameReady', nick: player.nick })
-      var isEveryGameReady = dictionary.keys(members).every(function (id, _, $) {
-        return members[id].ready === true
-      })
-      if (isEveryGameReady) {
-        server.broadcast({ cmd: 'game', members: dictionary.keys(members) })
-        game = { rounds: [ { members: {} } ] }
-        currentRound = 0;
-      }
-      break;
-
-    case 'roundReady':
-      game.rounds[currentRound].members[members[data.socket.id]] = { remain: 8 }
-      if (dictionary.length(game.rounds.members) == dictionary.length(members)) {
-        if (game.rounds.length == TOTAL_ROUND) {
-          gameover()
-        } else {
-          roundInit()
-        } 
-      }      
-      break;
-      
-    case 'roundRoll':
-      
-      break;
+  init() {
+    this.game = { rounds: [], prizes: [], players: [] };
+    [6, 8, 8, 6, 6, 5, 5, 5, 5].forEach((count, prize) => {
+      for (var index = 0; index < count; ++index) 
+        this.game.prizes.push(prize + 1);  
+    });
+    shuffle(this.game.prizes);
+    
+    this.currentRound = this.initRound();
+    this.broadcast({ cmd: 'round', game: this.game })    
   }
-});
+};

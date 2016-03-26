@@ -1,65 +1,80 @@
-var express = require('express')
-var bodyParser = require('body-parser')
-var cookie = require('cookie')
-var app = express()
-var flashio = require('./flashio/flashio.js')
-var dictionary = require('./dictionary.js')
+// var express = require('express');
+// var bodyParser = require('body-parser');
+// var cookie = require('cookie');
+// var app = express();
+// var dictionary = require('./dictionary.js');
+// var roomlib = require('./room.js');
 
-const RESTApiPort = 8080
-const FlashioPort = 3000
-var webserver = flashio.createServer(FlashioPort)
-console.log('Websocket listening from', FlashioPort);
+// const RESTApiPort = 8080
 
-// create application/json parser
-var jsonParser = bodyParser.json()
-// create application/x-www-form-urlencoded parser
-var urlencodedParser = bodyParser.urlencoded({ extended: false })
+// // create application/json parser
+// var jsonParser = bodyParser.json();
+// // create application/x-www-form-urlencoded parser
+// var urlencodedParser = bodyParser.urlencoded({ extended: false });
 
-app.get('/', function (req, res) {
-  console.log('/ requested.')
-});
+// app.get('/', function (req, res) {
+//   console.log('/ requested.');
+// });
 
-app.listen(RESTApiPort, function () {
-  console.log('RESTApi listening from' , RESTApiPort , '...')
-});
+// app.listen(RESTApiPort, function () {
+//   console.log('RESTApi listening from' , RESTApiPort , '...');
+// });
 
-var server = module.exports = {};
-var sockets = {}
-var listeners = {}
+import flashio from './flashio/flashio';
+import { EventEmitter } from 'events';
 
-server.broadcast = function (content) {
-  dictionary.forEach(sockets, function (id, _, $) {
-    var socket = sockets[id].socket
-    console.log('broadcasting', socket, '(', id, ')') 
-    webserver.send(socket, content)
-  })
-  console.log('broadcast(', dictionary.length(sockets), ') -', content) 
-}
+export class Server extends EventEmitter {
+  constructor() {
+    super();
+    const FlashioPort = 3000;
+    this.webserver = flashio.createServer(FlashioPort);
+    this.sockets = new Map();
+    this.defaultListeners = new Set();
 
-server.send = function (id, content) {
-  webserver.send(sockets[id].socket, content)
-}
-
-server.on = function (target, listener) {
-  listeners[target] = listener
-}
-
-server.off = function (target, listener) {
-  delete listeners[target]
-}
-
-webserver.on('connect', function (data) {
-  sockets[data.socket.id].socket = data.socket
-  console.log(data.socket.id + " connected.")
-})
-
-webserver.on('end', function (data) {
-  delete sockets[data.socket.id]
-  console.log("Socket", data.socket.id, "disconnected.")
-})
-
-webserver.on('data', function (data) {
-  console.log("Receiving from", data.socket.id, "-", data.message)
-  if (listeners[data.message.target] !== undefined)
-    listeners[data.message.target](data.socket.id, data.message)
-})
+    this.webserver.on('connect', data => {
+      console.log(`Socket ${data.socket.id} connected.`);
+      this.sockets.set(data.socket.id, { socket: data.socket, listeners: new Set() });
+      for (let listener of this.defaultListeners){
+        this.listen(data.socket.id, listener);
+        listener.onConnect(data.socket.id);
+      }
+    });
+    
+    this.webserver.on('end', data => {
+      console.log(`Socket ${data.socket.id} disconnected.`);
+      this.sockets.get(data.socket.id).listeners.forEach(listener => 
+        listener.leave(data.socket.id)
+      );
+      delete this.sockets.delete(data.socket.id);
+    });
+    
+    this.webserver.on('data', data => {
+      console.log(`Receiving from ${data.socket.id} - ${JSON.stringify(data.message)}`);
+      this.sockets.get(data.socket.id).listeners.forEach(listener => {
+        var { message: { cmd: func }, socket: { id: id } } = data;
+        listener[func](id, data.message);
+      });
+    });
+    
+    console.log('Websocket listening from', FlashioPort);
+  }
+  
+  broadcast(content, ...ids) {
+    console.log(`Broadcast(${JSON.stringify(ids)}) - ${JSON.stringify(content)}`);
+    ids.forEach(id => this.webserver.send(this.sockets.get(id).socket, content));
+  }
+  
+  send(content, id) {    
+    console.log(`Send(${id}) - ${JSON.stringify(content)}`);
+    this.webserver.send(this.sockets.get(id).socket, content);
+  }
+  
+  listen(id, listener) {
+    console.log(`listener added - Socket ${id}`);
+    this.sockets.get(id).listeners.add(listener);
+  }
+  
+  forget(id, listener) {
+    this.sockets.get(id).listeners.delete(listener);
+  }
+};
