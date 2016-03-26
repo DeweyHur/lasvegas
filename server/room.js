@@ -28,12 +28,20 @@ export class Room {
   }
   
   broadcast(content) {
-    if (this.members.length > 0)
+    var memberids = [...this.members.keys()];
+    if (memberids.length > 0) {
+      console.log(`broadcast(${memberids.join(',')}) - ${JSON.stringify(content)}`);
       this.server.broadcast(content, ...this.members.keys());
+    } else {
+      console.log(`broadcast to no one - ${JSON.stringify(content)}`);
+    }
   }
   
   join(id, member) {
+    console.log(`join - ${id}, ${JSON.stringify(member)}`);
     this.members.set(id, member);
+    var memberids = [...this.members.keys()];
+    console.log(`members(${memberids.length}) - ${memberids.join(',')}`);
     this.broadcastMembers();
   }
   
@@ -47,7 +55,6 @@ export class Room {
   }
   
   nick(id, message) {
-    console.log(`nick - ${JSON.stringify(message)}`);
     let member = this.members.get(id); 
     member.nick = message.nick;
     this.send({ cmd: 'you', info: member }, id);

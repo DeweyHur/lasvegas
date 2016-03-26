@@ -60,7 +60,7 @@ export class Server extends EventEmitter {
   }
   
   broadcast(content, ...ids) {
-    console.log(`Broadcast(${JSON.stringify(ids)}) - ${JSON.stringify(content)}`);
+    console.log(`broadcast(${JSON.stringify(ids)}) from server - ${JSON.stringify(content)}`);
     ids.forEach(id => this.webserver.send(this.sockets.get(id).socket, content));
   }
   
@@ -75,6 +75,7 @@ export class Server extends EventEmitter {
   }
   
   forget(id, listener) {
+    console.log(`listener removed - Socket ${id}`);
     this.sockets.get(id).listeners.delete(listener);
   }
 };

@@ -8,7 +8,7 @@ export class Lobby extends Room {
   }
   
   onConnect(id) {
-    this.join(id, { });
+    this.join(id, { nick: "User" + id });
   }
   
   create(id, message) {
