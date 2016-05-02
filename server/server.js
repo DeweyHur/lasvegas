@@ -50,17 +50,20 @@ export class Server extends EventEmitter {
     
     this.webserver.on('data', data => {
       console.log(`Receiving from ${data.socket.id} - ${JSON.stringify(data.message)}`);
-      this.sockets.get(data.socket.id).listeners.forEach(listener => {
+      let listeners = new Set(this.sockets.get(data.socket.id).listeners);
+      listeners.forEach(listener => {
         var { message: { cmd: func }, socket: { id: id } } = data;
+        console.log(`server data - (${id}) -${func}->`);
+        let entries = Object.entries(listener).map(entry => entry[0]).join(',');
+        console.log(`${listener[func]}`);
         listener[func](id, data.message);
       });
     });
-    
     console.log('Websocket listening from', FlashioPort);
   }
   
   broadcast(content, ...ids) {
-    console.log(`broadcast(${JSON.stringify(ids)}) from server - ${JSON.stringify(content)}`);
+    //console.log(`broadcast(${ids}) on server - ${JSON.stringify(content)}`);
     ids.forEach(id => this.webserver.send(this.sockets.get(id).socket, content));
   }
   
@@ -70,12 +73,12 @@ export class Server extends EventEmitter {
   }
   
   listen(id, listener) {
-    console.log(`listener added - Socket ${id}`);
+    console.log(`listener added - Socket ${id} to ${listener.constructor.name}`);
     this.sockets.get(id).listeners.add(listener);
   }
   
   forget(id, listener) {
-    console.log(`listener removed - Socket ${id}`);
+    console.log(`listener removed - Socket ${id} to ${listener.constructor.name}`);
     this.sockets.get(id).listeners.delete(listener);
   }
 };

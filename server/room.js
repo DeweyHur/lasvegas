@@ -1,26 +1,33 @@
 import {Server} from './server'
 
+let nextRoomId = 1;
 let rooms = new Map();
-let availableRoomId = 1;
 
-export function addRoom(room) {
-  let id = availableRoomId++;
-  rooms.set(id, room);
-  return id;  
-}
-
-export function getRoom(id) {
-  return rooms.get(id);
-};
-;
-export function removeRooms(id) {
+function removeRooms(id) {
+  let room = getRoom(id);
+  console.log(`Room ${id}(${room.constructor.name}) removed.`);
   rooms.delete(id);
 };
-;
+
 export class Room {
   constructor(server) {
     this.server = server;
     this.members = new Map();
+  }
+  
+  static get nextId() { return nextRoomId++; }
+  
+  static register(room) {
+    let id = nextRoomId++;
+    rooms.set(id, room);
+    room.id = id;
+    console.log(`Room ${id} created.`);
+    return id;
+  }
+  
+  static unregister(room) {
+    rooms.delete(room.id);
+    console.log(`Room ${room.id} removed.`);
   }
   
   send(content, id) {
@@ -29,25 +36,33 @@ export class Room {
   
   broadcast(content) {
     var memberids = [...this.members.keys()];
+    var className = this.constructor.name;
     if (memberids.length > 0) {
-      console.log(`broadcast(${memberids.join(',')}) - ${JSON.stringify(content)}`);
+      console.log(`broadcast(${memberids.join(',')}) on ${className}(${this.id}) - ${JSON.stringify(content)}`);
       this.server.broadcast(content, ...this.members.keys());
     } else {
-      console.log(`broadcast to no one - ${JSON.stringify(content)}`);
+      console.log(`broadcast to no one on ${className} - ${JSON.stringify(content)}`);
     }
   }
   
   join(id, member) {
     console.log(`join - ${id}, ${JSON.stringify(member)}`);
     this.members.set(id, member);
+    this.server.listen(id, this);
     var memberids = [...this.members.keys()];
     console.log(`members(${memberids.length}) - ${memberids.join(',')}`);
     this.broadcastMembers();
   }
   
   leave(id) {
+    var member = this.members.get(id);
     this.members.delete(id);
+    this.server.forget(id, this);
     this.broadcastMembers();
+    if (this.members.length == 0) {
+      Room.unregister(this);
+    }
+    return member;
   }
   
   broadcastMembers() {
@@ -77,8 +92,10 @@ export class GameRoom extends Room {
   
   ready(id, message) {
     this.members.get(id).ready = true;
-    if (this.members.values().every(member => member.ready === true))
-      this.init();
+    let allReady = Array.from(this.members, x => x[1].ready === true).every(x => x);
+    if (allReady) {
+      this.onAllReady();
+    }
   }  
 }
 

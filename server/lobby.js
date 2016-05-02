@@ -8,16 +8,21 @@ export class Lobby extends Room {
   }
   
   onConnect(id) {
-    this.join(id, { nick: "User" + id });
+    this.join(id, { id: id, nick: "User" + id });
   }
   
   create(id, message) {
-    var room = new this.games.get(message.game);
-    var roomId = addRoom(room);    
-    this.leave(id);
-    room.join(id);
-    this.broadast('room', 'created');
+    var room = this.games.get(message.game).createGame(this.server);
+    var roomId = Room.register(room);    
+    var member = this.leave(id);
+    room.join(id, member);
   }
   
-    
+  leave(id) {
+    var member = this.members.get(id);
+    this.members.delete(id);
+    this.server.forget(id, this);
+    this.broadcastMembers();
+    return member;
+  }  
 }
