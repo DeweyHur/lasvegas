@@ -1,7 +1,8 @@
-import {addRoom, Room} from './room';
-import {LasVegas} from './lasvegas';
+const Room = require('./room').Room;
+const addRoom = require('./room').addRoom;
+const LasVegas = require('./lasvegas').LasVegas;
 
-export class Lobby extends Room {
+module.exports.Lobby = class Lobby extends Room {
   constructor(server) {
     super(server);
     this.games = new Map().set('LasVegas', LasVegas);

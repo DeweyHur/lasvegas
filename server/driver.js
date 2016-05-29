@@ -1,6 +1,6 @@
-import {Server} from './server';
-import {shuffle} from './array';
-import {Lobby} from './lobby'
+const Server = require('./server').Server;
+const shuffle = require('./array').shuffle;
+const Lobby = require('./lobby').Lobby;
 
 var server = new Server();
 var lobby = new Lobby(server);

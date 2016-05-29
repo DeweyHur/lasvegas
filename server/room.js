@@ -1,4 +1,4 @@
-import {Server} from './server'
+const Server = require('./server').Server
 
 let nextRoomId = 1;
 let rooms = new Map();
@@ -9,7 +9,7 @@ function removeRooms(id) {
   rooms.delete(id);
 };
 
-export class Room {
+module.exports.Room = class Room {
   constructor(server) {
     this.server = server;
     this.members = new Map();
@@ -81,7 +81,7 @@ export class Room {
   }
 }
 
-export class GameRoom extends Room {
+module.exports.GameRoom = class GameRoom extends module.exports.Room {
   constructor(server) {
     super(server);
   }

@@ -20,10 +20,10 @@
 //   console.log('RESTApi listening from' , RESTApiPort , '...');
 // });
 
-import flashio from './flashio/flashio';
-import { EventEmitter } from 'events';
+const flashio = require('./flashio/flashio');
+const EventEmitter = require('events').EventEmitter;
 
-export class Server extends EventEmitter {
+module.exports.Server = class Server extends EventEmitter {
   constructor() {
     super();
     const FlashioPort = 3000;
@@ -54,7 +54,6 @@ export class Server extends EventEmitter {
       listeners.forEach(listener => {
         var { message: { cmd: func }, socket: { id: id } } = data;
         console.log(`server data - (${id}) -${func}->`);
-        let entries = Object.entries(listener).map(entry => entry[0]).join(',');
         console.log(`${listener[func]}`);
         listener[func](id, data.message);
       });

@@ -1,5 +1,4 @@
-
-export function shuffle (a) {
+module.exports.shuffle = a => {
   let i;
   let m = a.length;
   while (m) 
