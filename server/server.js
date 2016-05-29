@@ -1,25 +1,3 @@
-// var express = require('express');
-// var bodyParser = require('body-parser');
-// var cookie = require('cookie');
-// var app = express();
-// var dictionary = require('./dictionary.js');
-// var roomlib = require('./room.js');
-
-// const RESTApiPort = 8080
-
-// // create application/json parser
-// var jsonParser = bodyParser.json();
-// // create application/x-www-form-urlencoded parser
-// var urlencodedParser = bodyParser.urlencoded({ extended: false });
-
-// app.get('/', function (req, res) {
-//   console.log('/ requested.');
-// });
-
-// app.listen(RESTApiPort, function () {
-//   console.log('RESTApi listening from' , RESTApiPort , '...');
-// });
-
 const flashio = require('./flashio/flashio');
 const EventEmitter = require('events').EventEmitter;
 
@@ -62,7 +40,6 @@ module.exports.Server = class Server extends EventEmitter {
   }
   
   broadcast(content, ...ids) {
-    //console.log(`broadcast(${ids}) on server - ${JSON.stringify(content)}`);
     ids.forEach(id => this.webserver.send(this.sockets.get(id).socket, content));
   }
   
