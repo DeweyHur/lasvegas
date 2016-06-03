@@ -1,1 +1,1 @@
-lasvegas: node driver.js
+lasvegas: node server/driver.js
