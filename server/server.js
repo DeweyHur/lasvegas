@@ -4,7 +4,7 @@ const EventEmitter = require('events').EventEmitter;
 module.exports.Server = class Server extends EventEmitter {
   constructor() {
     super();
-    const FlashioPort = 8080;
+    const FlashioPort = 443;
     this.webserver = flashio.createServer(FlashioPort);
     this.sockets = new Map();
     this.defaultListeners = new Set();
